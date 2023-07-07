@@ -1,22 +1,24 @@
-type Message = record {
+type Event = record {
   id : text;
-  attachmentURL : text;
-  title : text;
-  body : text;
+  eventDescription : text;
   createdAt : nat64;
   updatedAt : opt nat64;
+  eventTitle : text;
+  eventCardImgUrl : text;
+  eventDate : text;
 };
-type MessagePayload = record {
-  attachmentURL : text;
-  title : text;
-  body : text;
+type EventPayload = record {
+  eventDescription : text;
+  eventTitle : text;
+  eventCardImgUrl : text;
+  eventDate : text;
 };
-type _AzleResult = variant { Ok : Message; Err : text };
-type _AzleResult_1 = variant { Ok : vec Message; Err : text };
+type _AzleResult = variant { Ok : Event; Err : text };
+type _AzleResult_1 = variant { Ok : vec Event; Err : text };
 service : () -> {
-  addMessage : (MessagePayload) -> (_AzleResult);
-  deleteMessage : (text) -> (_AzleResult);
-  getMessage : (text) -> (_AzleResult) query;
-  getMessages : () -> (_AzleResult_1) query;
-  updateMessage : (text, MessagePayload) -> (_AzleResult);
+  addMessage : (EventPayload) -> (_AzleResult);
+  deleteEvent : (text) -> (_AzleResult);
+  getAllEvents : () -> (_AzleResult_1) query;
+  getEventById : (text) -> (_AzleResult) query;
+  updateEvent : (text, EventPayload) -> (_AzleResult);
 }
