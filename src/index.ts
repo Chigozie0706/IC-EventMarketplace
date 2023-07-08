@@ -23,19 +23,24 @@ type EventPayload = Record<{
 
 const eventStorage = new StableBTreeMap<string, Event>(0, 44, 1024);
 
+// fetches all events created
 $query;
 export function getAllEvents(): Result<Vec<Event>, string> {
     return Result.Ok(eventStorage.values());
 }
 
+
+// fetches an event by it's id
 $query;
 export function getEventById(id: string): Result<Event, string> {
     return match(eventStorage.get(id), {
         Some: (event) => Result.Ok<Event, string>(event),
-        None: () => Result.Err<Event, string>(`a message with id=${id} not found`)
+        None: () => Result.Err<Event, string>(`an event with id=${id} not found`)
     });
 }
 
+
+// function that used to create an event
 $update;
 export function addEvent(payload: EventPayload): Result<Event, string> {
     const event: Event = { owner: ic.caller(), id: uuidv4(), attendees : [], createdAt: ic.time(), updatedAt: Opt.None, ...payload };
@@ -43,6 +48,8 @@ export function addEvent(payload: EventPayload): Result<Event, string> {
     return Result.Ok(event);
 }
 
+
+// function that updates an event by it's id
 $update;
 export function updateEvent(id: string, payload: EventPayload): Result<Event, string> {
     return match(eventStorage.get(id), {
@@ -51,49 +58,63 @@ export function updateEvent(id: string, payload: EventPayload): Result<Event, st
             eventStorage.insert(event.id, updatedEvent);
             return Result.Ok<Event, string>(updatedEvent);
         },
-        None: () => Result.Err<Event, string>(`couldn't update a message with id=${id}. message not found`)
+        None: () => Result.Err<Event, string>(`couldn't update the event with id=${id}. event not found`)
     });
 }
 
-$update;
-export function deleteEvent(id: string): Result<Event, string> {
+
+
+/**
+ * function that allows an event owner to delete his/her event
+ * by it's id 
+*/ 
+$update
+export function deleteEventById (id: string): Result<Event, string> {
     return match(eventStorage.get(id), {
         Some: (deletedEvent) => {
-        if(deletedEvent.owner.toString() !== ic.caller().toString()){
-            return Result.Err<Event, string>("You are not the owner of this event")
-        }
-        eventStorage.remove(id)
-        Result.Ok<Event, string>(deletedEvent)
-    },
-        None: () => Result.Err<Event, string>(`couldn't delete a message with id=${id}. message not found.`)
-    });
+
+            // checks if the caller is not the same as the owner of the event
+            if(deletedEvent.owner.toString() !== ic.caller().toString()){
+                return Result.Err<Event, string>("You are not the owner of this event")
+            }
+
+            // removes that particular event
+            eventStorage.remove(id)
+            return Result.Ok<Event, string>(deletedEvent)
+        },
+        None: () => Result.Err<Event, string>(`couldn't delete the event with id=${id}. event not found.`)
+    })
 }
 
 
+// function that allows users to rsvp an event
 $update;
-export function attendAnEvent(userId: string): Result<Event, string> {
-    // Get the user profile requesting the follow
-    const event = match(eventStorage.get(userId), {
+export function attendAnEvent (id: string): Result<Event, string> {
+    const event = match(eventStorage.get(id), {
         Some: (event) => {
-            // Check if the event is already following the account to be followed
-            // Return the event profile if account to be followed is already being followed
+
+        // gets the caller's address of the smart contract and converts it to string 
             const caller = ic.caller().toString()
+
+        // checks if that caller is already in the attendees list
             if(event.attendees.includes(caller)) {
                 return Result.Ok<Event, string>(event)
-            } else { // Else run the code below
-                // Save the user's initial following in a variable
-                const attendees: Vec<string> = event.attendees;
-                // Add the new user to be followed to the existing users already followed
-                attendees.push(caller);
-
-                const user1Profile: Event = {
+            } 
+            else { 
+        // gets the attendees list 
+            const attendees: Vec<string> = event.attendees;
+        // adds the caller to the attendees list
+            
+        // save the updated attendance list in the eventStorage 
+        attendees.push(caller);
+            const Event: Event = {
                     ...event,
-                    attendees: attendees // Assign the following variable to the list all of the users followed including the new user
+                    attendees: attendees 
                 }
-                // Save the current user's updated status in the userProfileStorage
-                eventStorage.insert(event.id, user1Profile);
-                // Return the user's profile with the updated changes
-                return Result.Ok<Event, string>(user1Profile);
+
+            eventStorage.insert(event.id, Event);
+        // return the event with the updated changes
+                return Result.Ok<Event, string>(Event);
             }
         },
         None: () => Result.Err<Event, string>("Unable to carry out the following function")
