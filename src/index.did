@@ -1,22 +1,26 @@
 type Event = record {
   id : text;
   eventDescription : text;
+  owner : principal;
   createdAt : nat64;
   updatedAt : opt nat64;
   eventTitle : text;
+  eventLocation : text;
+  attendees : vec text;
   eventCardImgUrl : text;
-  eventDate : text;
 };
 type EventPayload = record {
   eventDescription : text;
   eventTitle : text;
+  eventLocation : text;
   eventCardImgUrl : text;
   eventDate : text;
 };
 type _AzleResult = variant { Ok : Event; Err : text };
 type _AzleResult_1 = variant { Ok : vec Event; Err : text };
 service : () -> {
-  addMessage : (EventPayload) -> (_AzleResult);
+  addEvent : (EventPayload) -> (_AzleResult);
+  attendAnEvent : (text) -> (_AzleResult);
   deleteEvent : (text) -> (_AzleResult);
   getAllEvents : () -> (_AzleResult_1) query;
   getEventById : (text) -> (_AzleResult) query;
