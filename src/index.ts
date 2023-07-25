@@ -25,8 +25,11 @@ const eventStorage = new StableBTreeMap<string, Event>(0, 44, 1024);
 
 // fetches all events created
 $query;
-export function getAllEvents(): Result<Vec<Event>, string> {
-    return Result.Ok(eventStorage.values());
+export function getAllEvents(page: number, pageSize: number): Result<Vec<Event>, string> {
+    const startIdx = (page - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+    const events = eventStorage.values().slice(startIdx, endIdx);
+    return Result.Ok(events);
 }
 
 
@@ -43,7 +46,27 @@ export function getEventById(id: string): Result<Event, string> {
 // function that used to create an event
 $update;
 export function addEvent(payload: EventPayload): Result<Event, string> {
-    const event: Event = { owner: ic.caller(), id: uuidv4(), attendees : [], createdAt: ic.time(), updatedAt: Opt.None, ...payload };
+    
+    const { eventTitle, eventDescription, eventCardImgUrl, eventDate, eventLocation } = payload;
+
+    // Input validation
+    if (!eventTitle || !eventDescription || !eventCardImgUrl || !eventDate || !eventLocation) {
+        return Result.Err<Event, string>('Missing required fields');
+    }
+
+    const event: Event = {
+        owner: ic.caller(),
+        id: uuidv4(),
+        attendees: [],
+        createdAt: ic.time(),
+        updatedAt: Opt.None,
+        eventTitle,
+        eventDescription,
+        eventCardImgUrl,
+        eventLocation
+    };
+    
+    
     eventStorage.insert(event.id, event);
     return Result.Ok(event);
 }

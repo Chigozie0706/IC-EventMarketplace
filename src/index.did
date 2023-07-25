@@ -21,8 +21,8 @@ type _AzleResult_1 = variant { Ok : vec Event; Err : text };
 service : () -> {
   addEvent : (EventPayload) -> (_AzleResult);
   attendAnEvent : (text) -> (_AzleResult);
-  deleteToDo : (text) -> (_AzleResult);
-  getAllEvents : () -> (_AzleResult_1) query;
+  deleteEventById : (text) -> (_AzleResult);
+  getAllEvents : (float64, float64) -> (_AzleResult_1) query;
   getEventById : (text) -> (_AzleResult) query;
   updateEvent : (text, EventPayload) -> (_AzleResult);
 }
